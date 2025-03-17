@@ -13,9 +13,48 @@ const connectDB = async () => {
 
 connectDB();
 
-// Movie schema
-var MovieSchema = new Schema({
+const MovieSchema = new Schema({
+  title: { type: String, required: true, index: true },
+  releaseDate: { 
+    type: Number, 
+    required: true,
+    min: [1900, 'Must be greater than 1899'], 
+    max: [2100, 'Must be less than 2100']
+  },
+  genre: {
+    type: String,
+    required: true,
+    enum: [
+      'Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror', 'Mystery', 'Thriller', 'Western', 'Science Fiction'
+    ],
+  },
+  actors: {
+    type: [{
+      actorName: { type: String, required: true },
+      characterName: { type: String, required: true },
+    }],
+    required: true,
+    validate: [arrayMinLength, 'Movie must have at least one actor']
+  }
+});
 
+function arrayMinLength(val) {
+  return val.length > 0;
+}
+
+// Add validation middleware
+MovieSchema.pre('save', function(next) {
+  if (!this.actors || this.actors.length === 0) {
+    next(new Error('Movie must have at least one actor'));
+  } else {
+    next();
+  }
+});
+
+const UserSchema = new mongoose.Schema({
+  name: String,
+  username: { type: String, unique: true },
+  password: String, // this should be hashed in real-world scenario
 });
 
 module.exports = mongoose.model('Movie', MovieSchema);
