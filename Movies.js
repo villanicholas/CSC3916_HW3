@@ -51,10 +51,4 @@ MovieSchema.pre('save', function(next) {
   }
 });
 
-const UserSchema = new mongoose.Schema({
-  name: String,
-  username: { type: String, unique: true },
-  password: String, // this should be hashed in real-world scenario
-});
-
 module.exports = mongoose.model('Movie', MovieSchema);

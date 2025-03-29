@@ -1,72 +1,144 @@
-# Assignment Three
-## Purpose
-The purpose of this assignment is to get comfortable working with a NoSQL database (MongoDB). 
+# CSC3916_HW3 - Movie API
 
-For this assignment you will create a Users collection to store users for your signup and signin methods.  You will pass Username, Name and Password as part of signup.  To get a token you will call SingIn with username and password only.  The token should include the Name and UserName (not password)
-
-You will also create Movies collection to store information about movies.  All endpoints will be protected with the JWT token received by a signin call. 
+This project implements a RESTful API for a movie database with JWT authentication.
 
 ## Requirements
-Create a collection in MongoDB to hold information about movies
-- Each entry should contain the following
-    - title (string, required, index)
-    - releaseDate
-    - genre (Action, Adventure, Comedy, Drama, Fantasy, Horror, Mystery, Thriller, Western, Science Fiction)
-    - Array of three actors that were in the film
-        - actorName
-        - characterName
-    - The movie collection should have at least five movies
-- Create a NodeJS Web API to interact with your database
-    - Follow best practices (e.g. /movies collection)
-    - Your API should support all CRUD operations (through HTTP POST, PUT, DELETE, GET)
-    - Ensure incoming entities contain the necessary information.  For example if the movie does not contain actors, the entity should not be created and an error should be returned 
-- All endpoints should be protected with a JWT token (implement signup, and signin)
-    - For this assignment you must implement a User database in Mongo
-        - name
-        - username 
-        - password (should be hashed)
-    - If username exists the endpoint should return an error that the user already exists
-    - JWT secret needs to be stored in an environment variable
-- Update the Pre-React CSC3916_REACT placeholder project to support /signup and /signin methods.  The React Single Page App should use your Assignment 3 API to support those two operations.
 
-## Submissions
-- All source code should be stored on github (remember .gitignore for node_modules)
-- API needs to be deployed to heroku or render
-- React Website that allows user to signup and singin (we did this in class)
-- PostMan test collection that 
-    - Signs Up a user (create a random user name and random password in your pre-test)
-    - SignIn a User – parse token and store in postman environment variable
-    - A separate call for each endpoint (save a movie, update a movie, delete a movie and get a movie)
-    - Test error conditions (user already exists)
-        - SignUp (user already exist)
-        - Save Movie (missing information like actors (must be at least three), title, year or Genre)
+- Node.js
+- MongoDB Atlas account
+- Postman (for testing)
 
-- Create a readme.md at the root of your github repository with the embedded (markdown) to your test collection
-    - Within the collection click the (…), share collection -> Embed
-    - Static Button
-    - Click update link
-    - Include your environment settings
-    - Copy to clipboard 
-- Submit the Url to canvas with the REPO CSC_3916
-- Note: All tests should be testing against your Heroku or Render endpoint
+## Setup
 
-| Route | GET | POST | PUT | DELETE |
-| --- | --- | --- | --- | --- |
-| movies | Return all movies| save a single movie | FAIL | FAIL |
-| movies/:movieparameter | Return a specific movie based on the :movieparameter | FAIL | Update the specific movie based on the :movieparameter in your case it’s the title | Delete the specific movie based on the :movieparamters your case it’s the title |*
+1. Clone the repository:
+```bash
+git clone https://github.com/villanicholas/CSC3916_HW3.git
+cd CSC3916_HW3
+```
 
-* If Query String (Later Homework) reviews=true aggregate in reviews |
+2. Install dependencies:
+```bash
+npm install
+```
 
-## Rubic
-- -5 for missing REACT site (-2 if you are not able to signup or signin on the react site) that is all we implemented
-- -1 for MovieSchema missing any of the attributes (array of actors, genre, year released or title)
-- -2 for missing routes for /movies (POST/PUT/DELETE/GET)
-- -1 for missing authentication on routes
-- -2 for not deployed on Heroku/Render
-- -1 missing Test error conditions
-- -1 missing PostMan tests (signup, signin, separate call for each route)
+3. Create a `.env` file in the root directory with the following variables:
+```
+DB=mongodb+srv://your_username:your_password@your_cluster.mongodb.net/moviedb
+SECRET_KEY=your_strong_jwt_secret_key
+PORT=8080
+```
 
-## Resources
-- https://www.mongodb.com/cloud/atlas
-- Create a Free Subscription *Amazon
-- https://render.com/docs/deploy-create-react-app **important: Environment Variable for https://github.com/AliceNN-ucdenver/CSC3916_REACT env.REACT_APP_API_URL, this weekend I will look at changes (I believe only 1 change in the actions)
+4. Seed the database with sample movies:
+```bash
+node seedMovies.js
+```
+
+5. Start the server:
+```bash
+node server.js
+```
+
+## API Documentation
+
+### Authentication Endpoints
+
+#### Sign Up
+- **URL**: `/signup`
+- **Method**: `POST`
+- **Body**:
+```json
+{
+  "name": "Your Name",
+  "username": "your_username",
+  "password": "your_password"
+}
+```
+- **Success Response**: `201 Created`
+- **Error Response**: `400 Bad Request`, `409 Conflict`, `500 Internal Server Error`
+
+#### Sign In
+- **URL**: `/signin`
+- **Method**: `POST`
+- **Body**:
+```json
+{
+  "username": "your_username",
+  "password": "your_password"
+}
+```
+- **Success Response**: `200 OK` with JWT token
+- **Error Response**: `401 Unauthorized`, `500 Internal Server Error`
+
+### Movie Endpoints
+
+All movie endpoints require JWT authentication with an Authorization header:
+```
+Authorization: JWT your_token_here
+```
+
+#### Get All Movies
+- **URL**: `/movies`
+- **Method**: `GET`
+- **Success Response**: `200 OK` with array of movies
+- **Error Response**: `500 Internal Server Error`
+
+#### Create a Movie
+- **URL**: `/movies`
+- **Method**: `POST`
+- **Body**:
+```json
+{
+  "title": "Movie Title",
+  "releaseDate": 2023,
+  "genre": "Action",
+  "actors": [
+    {
+      "actorName": "Actor Name",
+      "characterName": "Character Name"
+    }
+  ]
+}
+```
+- **Success Response**: `201 Created`
+- **Error Response**: `400 Bad Request`, `500 Internal Server Error`
+
+#### Get a Specific Movie
+- **URL**: `/movies/:title`
+- **Method**: `GET`
+- **Success Response**: `200 OK` with movie object
+- **Error Response**: `404 Not Found`, `500 Internal Server Error`
+
+#### Update a Movie
+- **URL**: `/movies/:title`
+- **Method**: `PUT`
+- **Body**: Same as create movie (partial updates allowed)
+- **Success Response**: `200 OK` with updated movie
+- **Error Response**: `400 Bad Request`, `404 Not Found`, `500 Internal Server Error`
+
+#### Delete a Movie
+- **URL**: `/movies/:title`
+- **Method**: `DELETE`
+- **Success Response**: `200 OK` with success message
+- **Error Response**: `404 Not Found`, `500 Internal Server Error`
+
+## Postman Collection
+
+To test the API, you can use the Postman collection below. Click the "Run in Postman" button to import the collection.
+
+[Replace this with your Postman Collection Embed Code]
+
+### Instructions for testing with Postman:
+
+1. Import the collection using the button above
+2. Set up an environment with the following variables:
+   - `base_url`: Your API URL (e.g., `https://csc3916-hw3-uqxh.onrender.com`)
+   - `token`: (This will be automatically set after signin)
+3. Run the requests in this order:
+   - Sign Up
+   - Sign In (automatically sets the token)
+   - Get All Movies
+   - Create/Update/Delete operations
+
+## Deployment
+
+This API is deployed at: [https://csc3916-hw3-uqxh.onrender.com](https://csc3916-hw3-uqxh.onrender.com)

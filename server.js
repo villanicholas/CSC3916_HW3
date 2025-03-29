@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const passport = require('passport');
@@ -84,13 +85,25 @@ router.route('/movies')
                 return res.status(400).json({ success: false, message: 'Missing required fields.' });
             }
 
+            if (!req.body.actors || !Array.isArray(req.body.actors) || req.body.actors.length === 0) {
+                return res.status(400).json({ success: false, message: 'Movie must have at least one actor.' });
+            }
+
             const movie = new Movie(req.body);
             await movie.save();
-            return res.status(201).json({ success: true, message: 'Movie saved successfully.' });
+            return res.status(201).json({ success: true, message: 'Movie saved successfully.', movie: movie });
         } catch (err) {
             console.error(err);
             return res.status(500).json({ success: false, message: err.message });
         }
+    })
+    .put(authJwtController.isAuthenticated, async (req, res) => {
+        // Per requirements: PUT request to /movies should fail
+        return res.status(405).json({ success: false, message: 'Method not allowed. Use /movies/:title for updates.' });
+    })
+    .delete(authJwtController.isAuthenticated, async (req, res) => {
+        // Per requirements: DELETE request to /movies should fail
+        return res.status(405).json({ success: false, message: 'Method not allowed. Use /movies/:title for deletion.' });
     });
 
 router.route('/movies/:title')
@@ -106,8 +119,16 @@ router.route('/movies/:title')
             return res.status(500).json({ success: false, message: 'Error fetching movie.' });
         }
     })
+    .post(authJwtController.isAuthenticated, async (req, res) => {
+        // Per requirements: POST request to /movies/:title should fail
+        return res.status(405).json({ success: false, message: 'Method not allowed. Use /movies for creation.' });
+    })
     .put(authJwtController.isAuthenticated, async (req, res) => {
         try {
+            if (!req.body.title && !req.body.releaseDate && !req.body.genre && !req.body.actors) {
+                return res.status(400).json({ success: false, message: 'No fields to update.' });
+            }
+
             const movie = await Movie.findOneAndUpdate(
                 { title: req.params.title },
                 req.body,
